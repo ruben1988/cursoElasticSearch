@@ -1,0 +1,88 @@
+PROCESO DE INDEXACION
+Doc3:   "text" : "En la Mancha, llueve mucho"
+1º Se mira el mapping -> Obtiene el analizador adecuado (desarrollador): XX
+2º Analizador XX -> Lo aplico:
+   - Terminos y posiciones
+        - en 1
+        - la 2
+        - mancha 3
+        - llueve 4
+        - mucho 5
+3º Se añaden los términos nuevos
+4º Se actualiza la estructura de indexación
+5º Opcionalmente , se guarda el texto original
+   
+   
+   
+Indice: Coleccion de shard
+Shard: Coleccion de Terminos y estructuras de búsqueda: Lucene
+Terminos: en, un, lugar, de la, mancha, mucho, llueve
+Estructuras de búsqueda:
+-en: Doc 1, palabra 37, Doc3 palabra 1
+-mancha: 
+  Doc 1, palabra 40
+  Doc 2, palabra 57
+  Doc 3 palabra 3
+- llueve:
+  Doc 3, palabra 4
+OPCIONAL???
+- Doc1: source (En un lugar -,:de (la) Mancha...)
+- Doc2: source
+- Doc3: source(En la Mancha, llueve mucho)
+
+
+# NGram Filter
+APQRS9uu43
+   APQR
+   PQRS
+   QRS9
+   RS9u
+   S9uu
+   9uu4
+   uu43
+77
+J45
+
+
+
+# DB1 datos de facturas
+# Backup !!!!
+#  - Nivel 0 : Completo (Domingos)
+#  - Nivel 1 : Incremental (Todos los dias por la noche 00:05 de las novedades)
+# Log transaccionales: RedoLogs
+
+# Lucene
+ # Terminos, doc
+ # Elastic donde esta lucene : Guardar documento en un archivo: Registro de transacciones: ALTA
+              # Fichero secuenciales (Añade en un fichero)
+ # Lucene: Insertan los términos y el doc en la estructura de indexación NO OCURRE
+ # Lucene: Los terminos y el documento de guardan en un buffer en memoria (SIN PROCESAR): OK TRANSACCION
+ # Cliente recibe OK documento insertado
+ # Cliente hace busqueda del documento: NO
+ 
+ # REFRESH de un indice-> Que los términos ya estén dispobles en las búsquedas (1s)
+ 
+ # Al rato LUCENE LO INDEXA-> Generar un una estructura (memoria -> fichero) SEGMENTO: INDICE INVERTIDO ( 1 por doc)
+ 
+ 
+                                                                     # v Borrar el registro de transacciones
+ # SEGMENTOS QUE AUN ESTAN ESTAN EN MEMORIA se vuelque a ficheros en FLUSH
+ 
+ # Cliente quiere hacer una búsqueda -> SI que sale ya en la búsquedas
+        # ¿CUANTOS FICHERO (SEGMENTOS) tengo en lucene ? MUCHISISMOS:
+        # Cuando se hace una búsqueda se mira en CADA  FICHERO
+        
+        #DOC 1: Hola mi amigo => SEGMENTO: Estructura del indice invertido  [Terminos: 'hola':1   'amigo':3]
+        #DOC 2: Adios mi amigo => SEGMENTO: Estructura del indice invertido [Terminos: 'adios':1  'amigo':3]
+        
+        
+  # MERGE SEGMENTOS
+  # Lucene cuando le de la gana MERGE SEGMENTOS: MUY COSTO: ULTRACOSTOSO !!!!!!!!!
+          #SEGMENTO: Estructura del indice invertido [Terminos:  'adios':D2-1 'amigo':D1-3,D2-3 'hola':D1-1 ] FICHERO
+          #Disco duro 1Gb -> 2 segmentos 300Mb -> MERGE : POSIBLE EXPLOSION !!!! SIN ESPACIO
+
+# CROSS CLUSTER
+ # 1 cluster ingesta
+ # Otro cluster le conecto con el anterior y este al cargar los datos los optimiza para búsquedas (6h)
+        
+
